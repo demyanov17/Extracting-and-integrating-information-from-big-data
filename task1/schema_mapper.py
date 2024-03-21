@@ -1,57 +1,48 @@
 import re
-import json
-import requests
-from bs4 import BeautifulSoup
-
-HTMLFile = open("source1.html", "r")
-
-# Reading the file 
-index = HTMLFile.read()
+from mrjob.job import MRJob
 
 
-soup = BeautifulSoup(index, 'lxml')
+class MR_Gender_Analyzer2(MRJob):
 
-name = soup.find("meta", property="og:title")["content"]#.find('content')
-#print(name)
+    columns = None
 
-name = str(name)
-# print(name)
+    def mapper(self, _, line):
 
-#print(index)
+        """ csv -> [key, value]
+        Args:
+            line(str):
+        Returns:
+            key(str):
+            value(List):
+        """
 
-data = re.search(r"window.__INITIAL_STATE__ =(.*);", index).group(1)
-#data = json.loads(data)
+        from operator import itemgetter
 
-# pretty print the data:
-data = data.split(".parse('")[-1][:-2]
+        ids = [2,5,6]
+        column_values = line.split(",")
+        if column_values[1] == "Модель":
+            MR_Gender_Analyzer2.columns = itemgetter(*([1] + ids))(column_values)
+        else:
+            yield (column_values[1], itemgetter(*ids)(column_values)) 
+ 
 
-#data.replace()
-#data = json.loads(data)
-#print(data)
-# # pretty print the data:
-#print(json.dumps(data, indent=4))
-data = data.replace("\\", "")
-#print(data[165030:])
-#["elementInfo"][id, name]
+    def reducer(self, combi, line):
+        line = next(iter(line))
+        float(line[1])
+        line = list(line)
 
-#['elementInfo', 'badges', 'status', 'article', 'allProductsLink', 'prices', 'sectionsTree', 'gallery', 'galleryThumbs', 'linkedProducts', 'hasLeasing', 'creditText',
-#'tradeIn', 'yaPay', 'deliveries', 'banners', 'preOrderInfo', 'trailer', 'security', 'advantages', 'withoutPrice', 'yaPayBadge', 'yaPayBadgeCashback', 'tabs', 'productType',
-#'discountProduct', 'hasAccessoriesOrServices', 'analytics', 'breadcrumbs', 'csrf', 'seo', 'yandexId']
+        yield (combi, line)
 
-#["elementInfo"][id, name]
-#sectionsTree {'special': {'price': 499990, 'currency': 'RUB'}
-print((json.loads(data)["tabs"]["content"][0])["introSpecs"])
-
-
-
-
-#print(json.loads(data)["tabs"]["list"])
-#print((json.loads(data)["tabs"]["content"][0])["introSpecs"])
-
-#important! print((json.loads(data)["tabs"]["content"][0])["introSpecs"])
-
-
-
-#print(type(json.loads(data)))
-#print(soup.select_one("script", type="application/javascript").contents)
-#popmechanic-desktop
+if __name__ == '__main__':
+    data = []
+    Gender_Analyzer = MR_Gender_Analyzer2(["source2.csv"])
+    with Gender_Analyzer.make_runner() as runner:
+        runner.run()
+        for i, (model, atributes) in enumerate(Gender_Analyzer.parse_output(runner.cat_output())):
+            new_dict = dict(zip(Gender_Analyzer.columns, [model] + next(iter(atributes))))
+            data.append(new_dict)
+    import json
+    json_data = json.dumps(data, ensure_ascii=False, indent=4)
+    with open('source2.json', 'w', encoding='utf8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False)
+    print(json_data)
