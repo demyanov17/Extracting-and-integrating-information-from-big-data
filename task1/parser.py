@@ -1,199 +1,128 @@
+import os
 import re
-import csv
-import json
 import requests
 import pandas as pd
+import json, yaml, csv
 from bs4 import BeautifulSoup
+from abc import ABC, abstractmethod
 
 
-class HTML_1_Parser():
+class HTML_Parser(ABC):
 
-	def __init__(self):
+    def __init__(self, source_name):
+        self.atribute_dict = dict()
+        self.source_name = source_name
+        with open("parser.yaml", "r") as stream:
+            self.config = yaml.safe_load(stream)[self.source_name]
 
-	    self.atribute_dict = dict()
+    def parse_source(self):
+        path = "../task0/"
+        for file in os.listdir(path + self.source_name):
+            if file.endswith(".html"):
+                self.file_parser(path + self.source_name + "/" + file)
+        self.write_csv()
 
-	def file_parser(self, file_path):
+    @abstractmethod
+    def file_parser(self, file_path):
+        pass
 
-		HTMLFile = open(file_path, "r")
-		# Reading the file 
-		index = HTMLFile.read()
-		soup = BeautifulSoup(index, 'lxml')
-		name = name = soup.find("meta", property="og:title")["content"]
-		name = str(name).split(' - купить')[0]
-		if self.atribute_dict.get("Модель") is None:
-			self.atribute_dict["Модель"] = [name]
-		else:
-			self.atribute_dict["Модель"].append(name)
-		self.extract_data(soup)
+    @abstractmethod
+    def extract_data(self, soup):
+        pass
 
-
-	def write_csv(self):
-
-		df = pd.DataFrame(self.atribute_dict)
-		df.to_csv('source1.csv', index=True)
-
-
-	def extract_data(self, soup):
-
-		key = None
-
-		for atibute in soup.find_all("tr"):
-			if "Год выпуска" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Дисплей" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Разрешение экрана" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Оперативная память" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Объём памяти" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Оперативная память" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Количество ядер" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Процессор" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-2]
-
-			if "Разъёмы" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Цвет" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "В комплекте" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if key is not None:
-				if self.atribute_dict.get(key) is None:
-					self.atribute_dict[key] = [value]
-				else:
-					self.atribute_dict[key].append(value)
-			key = None
+    def write_csv(self):
+        df = pd.DataFrame(self.atribute_dict)
+        df.to_csv(f"{self.source_name}.csv", index=True)
 
 
-class HTML_2_Parser():
+class HTML_1_Parser(HTML_Parser):
 
-	def __init__(self):
+    def file_parser(self, file_path):
 
-	    self.atribute_dict = dict()
+        HTMLFile = open(file_path, "r")
+        index = HTMLFile.read()
+        soup = BeautifulSoup(index, "lxml")
+        name = name = soup.find("meta", property="og:title")["content"]
+        name = str(name).split(" - купить")[0]
+        name = name.replace(",", "")
+        if self.atribute_dict.get("Модель") is None:
+            self.atribute_dict["Модель"] = [name]
+        else:
+            self.atribute_dict["Модель"].append(name)
+        self.extract_data(soup)
 
-	def file_parser(self, file_path):
+    def extract_data(self, soup):
 
-		HTMLFile = open(file_path, "r")
-		# Reading the file 
-		index = HTMLFile.read()
-		soup = BeautifulSoup(index, 'lxml')
-		name = soup.find("meta", property="og:description")["content"]#.find('content')
-		name = str(name).split(' в')[0].split("ноутбук ")[-1]
-		if self.atribute_dict.get("Модель") is None:
-			self.atribute_dict["Модель"] = [name]
-		else:
-			self.atribute_dict["Модель"].append(name)
-		self.extract_data(soup)
+        key = None
 
+        for atibute in soup.find_all("tr"):
+            for column in self.config["columns_list"]:
+                if column in atibute.text:
+                    key, value = atibute.text.split("<td>")[0].split("\n")[1:-1]
 
-	def write_csv(self):
+            if "Процессор" in atibute.text:
+                key, value = atibute.text.split("<td>")[0].split("\n")[1:-2]
 
-		df = pd.DataFrame(self.atribute_dict)
-		df.to_csv('source2.csv', index=True)
+            if key is not None:
+                if self.atribute_dict.get(key) is None:
+                    self.atribute_dict[key] = [value]
+                else:
+                    self.atribute_dict[key].append(value)
+            key = None
 
-
-	def extract_data(self, soup):
-
-		columns_list = ["Диагональ экрана", "Процессор", "Серия"]
-		key = None
-		for atibute in soup.find_all("tr"):
-
-			if "Диагональ экрана" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Процессор" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Серия" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Цвет" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Тип экрана" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Диагональ экрана" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Разрешение экрана" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Яркость" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Количество ядер процессора" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Видеопроцессор" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Количество ядер процессора" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Тип накопителя" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Bluetooth" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Интерфейсы" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Емкость аккумулятора" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Время работы" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Микрофон" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Сканер отпечатка пальца" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Год" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if "Вес" in atibute.text:
-				key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			# if any(column in atibute.text for column in columns_list):
-			# 	key, value = atibute.text.split('<td>')[0].split("\n")[1:-1]
-
-			if key is not None:
-				if self.atribute_dict.get(key) is None:
-					self.atribute_dict[key] = [value]
-				else:
-					self.atribute_dict[key].append(value)
-			key = None
+        notebook_price = soup.find("span", class_="update_price").text
+        if self.atribute_dict.get("Цена") is None:
+            self.atribute_dict["Цена"] = [notebook_price]
+        else:
+            self.atribute_dict["Цена"].append(notebook_price)
+        notebook_weight = soup.find("span", class_="pr_weight").text
+        if self.atribute_dict.get("Вес") is None:
+            self.atribute_dict["Вес"] = [notebook_weight]
+        else:
+            self.atribute_dict["Вес"].append(notebook_weight)
 
 
-parser = HTML_1_Parser()
-import os
-for file in os.listdir("source1"):
-	if file.endswith(".html"):
-		parser.file_parser(f"source1/{file}")
-parser.write_csv()
+class HTML_2_Parser(HTML_Parser):
+
+    def file_parser(self, file_path):
+
+        HTMLFile = open(file_path, "r")
+        index = HTMLFile.read()
+        soup = BeautifulSoup(index, "lxml")
+        name = soup.find("meta", property="og:description")["content"]
+        name = str(name).split(" в")[0].split("ноутбук ")[-1]
+        if self.atribute_dict.get("Модель") is None:
+            self.atribute_dict["Модель"] = [name]
+        else:
+            self.atribute_dict["Модель"].append(name)
+        self.extract_data(soup)
+
+    def extract_data(self, soup):
+
+        key = None
+
+        for atibute in soup.find_all("tr"):
+            for column in self.config["columns_list"]:
+                if column in atibute.text:
+                    key, value = atibute.text.split("<td>")[0].split("\n")[1:-1]
+
+            if "Комплектация" in atibute.text:
+                key, value = atibute.text.split("<td>")[0].split("\n")[1:-1]
+                value = value.replace(",", ";")
+
+            if key is not None:
+                if self.atribute_dict.get(key) is None:
+                    self.atribute_dict[key] = [value]
+                else:
+                    self.atribute_dict[key].append(value)
+            key = None
+
+        notebook_price = soup.find("p", class_="price").text
+
+        if self.atribute_dict.get("Цена") is None:
+            self.atribute_dict["Цена"] = [notebook_price]
+        else:
+            self.atribute_dict["Цена"].append(notebook_price)
 
 
-parser = HTML_2_Parser()
-import os
-for file in os.listdir("source2"):
-	if file.endswith(".html"):
-		parser.file_parser(f"source2/{file}")
-parser.write_csv()
+HTML_1_Parser("source1").parse_source(), HTML_2_Parser("source2").parse_source()

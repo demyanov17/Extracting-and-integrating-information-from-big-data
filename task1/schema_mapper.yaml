@@ -1,0 +1,40 @@
+source1:
+    ids: [2, 4, 5, 6, 8, 7, 10, 11, 13, 12]
+    model_name_id: 1
+    year_id: 2
+    ssd_id: 4
+    ram_id: 5
+    screen_id: 6
+    cores_id: 8
+    process_name_id: 9
+    color_id: 16
+    equipment_id: 17
+    price_id: 18
+    weight_id: 19
+
+source2:
+    ids: [17, 10, 11, 6, 8, 9, 2, 18, 19, 20]
+    model_name_id: 1
+    year_id: 23
+    ssd_id: 10
+    ram_id: 11
+    screen_id: 6
+    cores_id: 9
+    process_name_id: 8
+    color_id: 2
+    equipment_id: 24
+    price_id: 26
+    weight_id: 25
+
+schema_columns:
+    - Модель
+    - Год выпуска
+    - Объём памяти
+    - Оперативная память
+    - Разрешение экрана
+    - Процессор
+    - Количество ядер
+    - Цвет
+    - Комплектация
+    - Вес
+    - Цена
