@@ -42,9 +42,7 @@ class MR_Duplicate_Finder(MRJob):
             value(dict): dict with a description of the entity
         """
 
-        column_values = line.split(", ")
         entity_dict = ast.literal_eval(line[:-1])
-
         yield f"RAM: {entity_dict['Оперативная память']} GB, SSD: {entity_dict['Объём памяти']} GB", entity_dict
 
     def reducer(self, block_key: str, entities: List[Dict]) -> Tuple[str, List[Dict]]:
@@ -65,9 +63,15 @@ class MR_Duplicate_Finder(MRJob):
         entities = list(entities)
         lenght = len(entities)
         for i in range(lenght - 1):
+            duplicates_found_flag = False
             for j in range(i + 1, lenght):
                 if self.similarity_checker(entities[i], entities[j]):
                     duplicates.append([entities[i], entities[j]])
+                    duplicates_found_flag = True
+                if j == lenght-1 and duplicates_found_flag:
+                    break
+            else:
+                duplicates.append([entities[i]])
 
         yield (block_key, duplicates)
 
