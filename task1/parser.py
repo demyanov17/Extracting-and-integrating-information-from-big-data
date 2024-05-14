@@ -30,7 +30,7 @@ class HTML_Parser(ABC):
     def extract_data(self, soup):
         pass
 
-    def add_attribute_dict(self, key, value):
+    def update_attribute_dict(self, key, value):
         if self.atribute_dict.get(key) is None:
             self.atribute_dict[key] = [value]
         else:
@@ -51,7 +51,7 @@ class HTML_1_Parser(HTML_Parser):
         name = name = soup.find("meta", property="og:title")["content"]
         name = str(name).split(" - купить")[0]
         name = name.replace(",", "")
-        self.add_attribute_dict("Модель", name)
+        self.update_attribute_dict("Модель", name)
         self.extract_data(soup)
 
     def extract_data(self, soup):
@@ -67,14 +67,14 @@ class HTML_1_Parser(HTML_Parser):
                 key, value = atibute.text.split("<td>")[0].split("\n")[1:-2]
 
             if key is not None:
-                self.add_attribute_dict(key, value)
+                self.update_attribute_dict(key, value)
             key = None
 
         notebook_price = soup.find("span", class_="update_price").text
-        self.add_attribute_dict("Цена", notebook_price)
+        self.update_attribute_dict("Цена", notebook_price)
 
         notebook_weight = soup.find("span", class_="pr_weight").text
-        self.add_attribute_dict("Вес", notebook_weight)
+        self.update_attribute_dict("Вес", notebook_weight)
 
 
 class HTML_2_Parser(HTML_Parser):
@@ -86,7 +86,7 @@ class HTML_2_Parser(HTML_Parser):
         soup = BeautifulSoup(index, "lxml")
         name = soup.find("meta", property="og:description")["content"]
         name = str(name).split(" в")[0].split("ноутбук ")[-1]
-        self.add_attribute_dict("Модель", name)
+        self.update_attribute_dict("Модель", name)
         self.extract_data(soup)
 
     def extract_data(self, soup):
@@ -103,11 +103,11 @@ class HTML_2_Parser(HTML_Parser):
                 value = value.replace(",", ";")
 
             if key is not None:
-                self.add_attribute_dict(key, value)
+                self.update_attribute_dict(key, value)
             key = None
 
         notebook_price = soup.find("p", class_="price").text
-        self.add_attribute_dict("Цена", notebook_price)
+        self.update_attribute_dict("Цена", notebook_price)
 
 
 HTML_1_Parser("source1").parse_source(), HTML_2_Parser("source2").parse_source()
