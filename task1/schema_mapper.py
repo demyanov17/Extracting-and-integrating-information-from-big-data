@@ -38,7 +38,7 @@ class Source1_Mapper(Source_Mapper, MRJob):
             Source1_Mapper.columns = itemgetter(*([config["model_name_id"]] + ids))(column_values)
         else:
             process_name = column_values[config["process_name_id"]].split(" (")[0][1:]
-            cores_number = int(config["cores_id"])
+            cores_number = int(column_values[config["cores_id"]])
             ssd_memory_capacity, type_ = column_values[config["ssd_id"]].split()[1:]
             ssd_memory_capacity = int(ssd_memory_capacity)
             if type_ == "ТБ":
