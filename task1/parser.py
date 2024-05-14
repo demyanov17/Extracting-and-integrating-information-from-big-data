@@ -30,6 +30,12 @@ class HTML_Parser(ABC):
     def extract_data(self, soup):
         pass
 
+    def add_attribute_dict(self, key, value):
+        if self.atribute_dict.get(key) is None:
+            self.atribute_dict[key] = [value]
+        else:
+            self.atribute_dict[key].append(value)
+
     def write_csv(self):
         df = pd.DataFrame(self.atribute_dict)
         df.to_csv(f"{self.source_name}.csv", index=True)
@@ -45,10 +51,7 @@ class HTML_1_Parser(HTML_Parser):
         name = name = soup.find("meta", property="og:title")["content"]
         name = str(name).split(" - купить")[0]
         name = name.replace(",", "")
-        if self.atribute_dict.get("Модель") is None:
-            self.atribute_dict["Модель"] = [name]
-        else:
-            self.atribute_dict["Модель"].append(name)
+        self.add_attribute_dict("Модель", name)
         self.extract_data(soup)
 
     def extract_data(self, soup):
@@ -64,22 +67,14 @@ class HTML_1_Parser(HTML_Parser):
                 key, value = atibute.text.split("<td>")[0].split("\n")[1:-2]
 
             if key is not None:
-                if self.atribute_dict.get(key) is None:
-                    self.atribute_dict[key] = [value]
-                else:
-                    self.atribute_dict[key].append(value)
+                self.add_attribute_dict(key, value)
             key = None
 
         notebook_price = soup.find("span", class_="update_price").text
-        if self.atribute_dict.get("Цена") is None:
-            self.atribute_dict["Цена"] = [notebook_price]
-        else:
-            self.atribute_dict["Цена"].append(notebook_price)
+        self.add_attribute_dict("Цена", notebook_price)
+
         notebook_weight = soup.find("span", class_="pr_weight").text
-        if self.atribute_dict.get("Вес") is None:
-            self.atribute_dict["Вес"] = [notebook_weight]
-        else:
-            self.atribute_dict["Вес"].append(notebook_weight)
+        self.add_attribute_dict("Вес", notebook_weight)
 
 
 class HTML_2_Parser(HTML_Parser):
@@ -91,10 +86,7 @@ class HTML_2_Parser(HTML_Parser):
         soup = BeautifulSoup(index, "lxml")
         name = soup.find("meta", property="og:description")["content"]
         name = str(name).split(" в")[0].split("ноутбук ")[-1]
-        if self.atribute_dict.get("Модель") is None:
-            self.atribute_dict["Модель"] = [name]
-        else:
-            self.atribute_dict["Модель"].append(name)
+        self.add_attribute_dict("Модель", name)
         self.extract_data(soup)
 
     def extract_data(self, soup):
@@ -111,18 +103,11 @@ class HTML_2_Parser(HTML_Parser):
                 value = value.replace(",", ";")
 
             if key is not None:
-                if self.atribute_dict.get(key) is None:
-                    self.atribute_dict[key] = [value]
-                else:
-                    self.atribute_dict[key].append(value)
+                self.add_attribute_dict(key, value)
             key = None
 
         notebook_price = soup.find("p", class_="price").text
-
-        if self.atribute_dict.get("Цена") is None:
-            self.atribute_dict["Цена"] = [notebook_price]
-        else:
-            self.atribute_dict["Цена"].append(notebook_price)
+        self.add_attribute_dict("Цена", notebook_price)
 
 
 HTML_1_Parser("source1").parse_source(), HTML_2_Parser("source2").parse_source()
