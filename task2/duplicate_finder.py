@@ -59,19 +59,13 @@ class MR_Duplicate_Finder(MRJob):
             of duplicate dictionaries
         """
 
-        duplicates = []
         entities = list(entities)
         lenght = len(entities)
+        duplicates = [[entities[i]] for i in range(lenght)]
         for i in range(lenght - 1):
-            duplicates_found_flag = False
             for j in range(i + 1, lenght):
                 if self.similarity_checker(entities[i], entities[j]):
-                    duplicates.append([entities[i], entities[j]])
-                    duplicates_found_flag = True
-                if j == lenght-1 and duplicates_found_flag:
-                    break
-            else:
-                duplicates.append([entities[i]])
+                    duplicates[i].append(entities[j])
 
         yield (block_key, duplicates)
 
@@ -137,9 +131,8 @@ if __name__ == "__main__":
         for _, duplicate_lists_of_dicts in Duplicate_Finder.parse_output(
             runner.cat_output()
         ):
-            if duplicate_lists_of_dicts:
-                for duplicate_list_of_dicts in duplicate_lists_of_dicts:
-                    data.append({"duplicates": duplicate_list_of_dicts})
+            for duplicate_list_of_dicts in duplicate_lists_of_dicts:
+                data.append({"duplicates": duplicate_list_of_dicts})
     
     os.remove("raw_data.json")
 
