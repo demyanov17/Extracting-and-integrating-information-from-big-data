@@ -49,10 +49,7 @@ class Data_Fusion(MRJob):
         }
 
         duplicates_dict = ast.literal_eval(next(duplicates)[:-1])
-        entity_versions = [
-            duplicates_dict["duplicates"][i]
-            for i in range(len(duplicates_dict["duplicates"]))
-        ]
+        entity_versions = duplicates_dict["duplicates"]
 
         if len(entity_versions) == 1:
             yield (duplicates_number, entity_versions[0])
