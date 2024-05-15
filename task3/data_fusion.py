@@ -54,6 +54,9 @@ class Data_Fusion(MRJob):
             for i in range(len(duplicates_dict["duplicates"]))
         ]
 
+        if len(entity_versions) == 1:
+            yield (duplicates_number, entity_versions[0])
+
         fused_entity = dict()
         for key in entity_versions[0].keys():
             if key in atributes_resolving_strategy.keys():
@@ -103,5 +106,5 @@ if __name__ == "__main__":
 
     os.remove("raw_data.json")
 
-    with open("resolve_enteties.json", "w", encoding="utf8") as json_file:
+    with open("enteties.json", "w", encoding="utf8") as json_file:
         json.dump(data, json_file, ensure_ascii=False, indent=4)
