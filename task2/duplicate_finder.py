@@ -127,7 +127,6 @@ if __name__ == "__main__":
     Duplicate_Finder = MR_Duplicate_Finder(["raw_data.json"])
     with Duplicate_Finder.make_runner() as runner:
         runner.run()
-        data = []
         for _, duplicate_lists_of_dicts in Duplicate_Finder.parse_output(
             runner.cat_output()
         ):
