@@ -97,7 +97,6 @@ if __name__ == "__main__":
     Fusy = Data_Fusion(["raw_data.json"])
     with Fusy.make_runner() as runner:
         runner.run()
-        data = []
         for _, resolved_entity in Fusy.parse_output(runner.cat_output()):
             data.append(resolved_entity)
 
